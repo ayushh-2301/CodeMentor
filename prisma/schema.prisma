@@ -1,0 +1,110 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  image         String?
+  
+  // Gamification
+  xp            Int       @default(0)
+  streak        Int       @default(0)
+  lastActive    DateTime  @default(now())
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  submissions   Submission[]
+  hintsUsed     HintHistory[]
+  
+  // NextAuth
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Problem {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  difficulty    String    // Easy, Medium, Hard
+  content       String    // Markdown description
+  starterCode   String    // Default code for editor
+  
+  testCases     Json      // Stores input/output pairs for validation
+  
+  submissions   Submission[]
+  hints         HintHistory[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Submission {
+  id            String    @id @default(cuid())
+  userId        String
+  problemId     String
+  
+  code          String
+  status        String    // Accepted, Wrong Answer, Runtime Error, etc.
+  runtime       Float?    // milliseconds
+  memory        Float?    // megabytes
+  
+  createdAt     DateTime  @default(now())
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem       Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+model HintHistory {
+  id            String    @id @default(cuid())
+  userId        String
+  problemId     String
+  
+  hintContent   String
+  context       String?   // what the user was doing when hint was requested
+  
+  createdAt     DateTime  @default(now())
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem       Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+// NextAuth Models
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([provider, providerAccountId])
+}
+ 
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
