@@ -45,8 +45,8 @@ export async function executeCode(language: string, code: string, args: string[]
     });
 
     if (!response.ok) {
-        throw new Error(\`Piston API execution failed: \${response.statusText}\`);
-  }
+        throw new Error(`Piston API execution failed: ${response.statusText}`);
+    }
 
-  return response.json();
+    return response.json();
 }
